@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>YouTube Video Wall (Local)</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+    <div id="start-overlay">
+        <div class="start-content">
+            <h1>SISTEMA DE MONITOREO</h1>
+            <p>Estado: En espera de operador</p>
+            <button id="start-btn">ACTIVAR SISTEMA</button>
+        </div>
+    </div>
+
+    <div id="control-dock">
+        <button id="patrol-btn" title="Activar rotación automática (10s)">
+            <span class="indicator"></span> MODO PATRULLA
+        </button>
+    </div>
+
+    <div class="main-grid">
+        <div class="quadrant main-quadrant" id="q1"></div>
+        <div class="quadrant sub-grid" id="q2"></div>
+        <div class="quadrant sub-grid" id="q3"></div>
+        <div class="quadrant sub-grid" id="q4"></div>
+    </div>
+
+    <script src="script.js"></script>
+    <script src="https://www.youtube.com/iframe_api"></script>
+</body>
+</html>
