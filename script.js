@@ -8,9 +8,10 @@ const videoIds = [
 
 // Variables de Estado
 let players = [];
-let activeIndex = 0; // Quién tiene el audio
+let activeIndex = 0;       // Quién tiene el audio
 let patrolInterval = null;
 let isPatrolActive = false;
+let pendingAudioIndex = null; // Restaura audio tras recrear un player
 
 // Elementos DOM
 const startOverlay = document.getElementById('start-overlay');
@@ -113,8 +114,12 @@ function createSinglePlayer(index, vidId) {
 
 function onPlayerReady(event, index) {
     event.target.playVideo();
-    // Al inicio, solo el 0 tiene audio
-    if (index === 0 && !isPatrolActive) {
+    if (pendingAudioIndex === index) {
+        // Restaurar audio a este player (venía de swap o reload)
+        setAudioTo(index);
+        pendingAudioIndex = null;
+    } else if (index === 0 && !isPatrolActive && pendingAudioIndex === null) {
+        // Al inicio, solo el cuadrante principal tiene audio
         setAudioTo(0);
     }
 }
@@ -149,54 +154,52 @@ function handleClick(event, index) {
 
 // Cambiar audio y borde visual
 function setAudioTo(index) {
+    const prevIndex = activeIndex;
     activeIndex = index;
-    
-    players.forEach(p => {
-        if(p && typeof p.mute === 'function') p.mute();
-    });
 
-    if(players[index] && typeof players[index].unMute === 'function') {
-        players[index].unMute();
-        players[index].setVolume(100);
+    // Mutear solo el anterior (evita iterar todos los players)
+    if (prevIndex !== index) {
+        const prev = players[prevIndex];
+        if (prev && typeof prev.mute === 'function') prev.mute();
     }
 
-    updateVisuals(index);
-}
+    // Activar audio del nuevo
+    const current = players[index];
+    if (current && typeof current.unMute === 'function') {
+        current.unMute();
+        current.setVolume(100);
+    }
 
-function updateVisuals(activeIdx) {
-    document.querySelectorAll('.video-wrapper').forEach(w => w.classList.remove('audio-active'));
-    const activeWrapper = document.getElementById(`wrapper-${activeIdx}`);
-    if(activeWrapper) activeWrapper.classList.add('audio-active');
+    // Actualizar visuals directo por ID (evita querySelectorAll sobre todos los wrappers)
+    document.getElementById(`wrapper-${prevIndex}`)?.classList.remove('audio-active');
+    document.getElementById(`wrapper-${index}`)?.classList.add('audio-active');
 }
 
 // --- 4. FEATURES AVANZADAS ---
 
 // Feature: SWAP (Intercambio)
 function swapVideos(idxA, idxB) {
-    console.log(`Swapping video ${idxA} <-> ${idxB}`);
-    
-    // 1. Intercambiar IDs en el array
-    const temp = videoIds[idxA];
-    videoIds[idxA] = videoIds[idxB];
-    videoIds[idxB] = temp;
+    // Intercambiar IDs en el array
+    [videoIds[idxA], videoIds[idxB]] = [videoIds[idxB], videoIds[idxA]];
 
-    // 2. Recrear reproductores
+    // Marcar cuadrante principal como destino del audio (event-driven, sin setTimeout)
+    pendingAudioIndex = idxA;
+
+    // Recrear ambos reproductores
     createSinglePlayer(idxA, videoIds[idxA]);
     createSinglePlayer(idxB, videoIds[idxB]);
-
-    // 3. Restaurar audio al principal tras breve delay
-    setTimeout(() => setAudioTo(0), 800);
 }
 
 // Feature: PÁNICO (Recarga Individual)
 function reloadVideo(index) {
-    console.log("Reloading stream:", index);
     const p = players[index];
     if (p && typeof p.loadVideoById === 'function') {
-        // Forzamos recarga del mismo ID
+        // loadVideoById preserva el estado de mute del player existente
         p.loadVideoById(videoIds[index]);
     } else {
-        // Fallback drástico: recrear
+        // Fallback: recrear el player desde cero
+        // Si era el activo, restaurar audio cuando esté listo
+        if (index === activeIndex) pendingAudioIndex = index;
         createSinglePlayer(index, videoIds[index]);
     }
 }
