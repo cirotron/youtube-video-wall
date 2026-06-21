@@ -2,8 +2,17 @@
 
 Un dashboard de monitoreo de video profesional basado en web (HTML5/JS) diseñado para visualizar múltiples transmisiones de YouTube Live simultáneamente. Optimizado para pantallas Full HD (1920x1080) con una arquitectura de grilla responsive y controles avanzados de operador.
 
-![Version](https://img.shields.io/badge/version-1.0.0-blue.svg)
+![Version](https://img.shields.io/badge/version-1.1.0-blue.svg)
 ![License](https://img.shields.io/badge/license-MIT-green.svg)
+
+## 🆕 Novedades en v1.1.0
+
+- **Audio confiable tras Swap/Reload:** El sistema de restauración de audio pasó de un `setTimeout` arbitrario a un mecanismo event-driven (`pendingAudioIndex`), eliminando race conditions en conexiones lentas.
+- **Sin pérdida de audio en recargas:** Si el video activo era recargado por el botón de pánico, volvía en mute. Corregido.
+- **Rendimiento en FHD:** Grid con unidades `1fr`, `contain: strict` por cuadrante y capas GPU para elementos animados — el browser optimiza el repaint de cada celda de forma independiente.
+- **DOM eficiente:** `setAudioTo` ya no itera todos los players ni hace `querySelectorAll` en cada cambio de audio.
+
+Ver el historial completo en [CHANGELOG.md](CHANGELOG.md).
 
 ## Características Principales
 
